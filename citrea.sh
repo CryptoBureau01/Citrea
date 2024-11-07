@@ -111,6 +111,10 @@ install_dependency() {
 setup_node() {
     echo "Starting Citrea node setup..."
 
+    sudo ufw allow 18443
+    sudo ufw allow 18444
+    sudo ufw enable
+    
     # Step 1: Create the /root/citrea directory
     echo "Creating /root/citrea directory..."
     mkdir -p /root/citrea
