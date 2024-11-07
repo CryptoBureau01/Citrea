@@ -53,7 +53,7 @@ master_fun() {
 install_dependency() {
     print_info "<=========== Install Dependency ==============>"
     print_info "Updating and upgrading system packages, and installing curl..."
-    sudo apt update && sudo apt upgrade -y && sudo apt install git wget curl -y 
+    sudo apt update && sudo apt upgrade -y && sudo apt install jq git wget curl -y 
 
     # Check if Docker is install
     print_info "Installing Docker..."
