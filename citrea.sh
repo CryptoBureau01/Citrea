@@ -136,9 +136,119 @@ setup_node() {
 
 
 
+check_sync_status() {
+    # Get the blockchain info using JSON-RPC
+    response=$(curl --user citrea:citrea --data-binary '{"jsonrpc": "1.0", "id": "curltest", "method": "getblockchaininfo", "params": []}' -H 'content-type: text/plain;' http://0.0.0.0:18443)
+
+    # Extract chain, block number, and other information from the response
+    chain=$(echo $response | jq -r '.result.chain')
+    blocks=$(echo $response | jq -r '.result.blocks')
+
+    # Check if node is fully synced
+    if [[ "$blocks" -gt 0 ]]; then
+        echo "Node is fully synced"
+        echo "Status: Synced"
+        echo "Chain: $chain"
+        echo "Block Number: $blocks"
+    else
+        echo "Node is not fully synced yet"
+    fi
+
+    # Call the master function to display the menu
+    master
+}
 
 
 
+# Function to setup the Citrea Testnet
+setup_testnet() {
+    # Create the testnet folder if it doesn't exist
+    mkdir -p /root/citrea/testnet
+    cd /root/citrea/testnet
+
+    # Download the required files
+    echo "Downloading rollup_config.toml..."
+    curl https://raw.githubusercontent.com/chainwayxyz/citrea/nightly/resources/configs/testnet/rollup_config.toml --output rollup_config.toml
+
+    echo "Downloading genesis.tar.gz..."
+    curl https://static.testnet.citrea.xyz/genesis.tar.gz --output genesis.tar.gz
+
+    # Extract the genesis tarball
+    echo "Extracting genesis.tar.gz..."
+    tar -xzvf genesis.tar.gz
+
+    # Download the Citrea binary
+    echo "Downloading citrea-v0.5.4-linux-amd64..."
+    curl -L https://github.com/chainwayxyz/citrea/releases/download/v0.5.4/citrea-v0.5.4-linux-amd64 --output citrea-v0.5.4-linux-amd64
+
+    # Give execute permissions to the binary
+    chmod u+x ./citrea-v0.5.4-linux-amd64
+
+    # Run the Citrea binary with the specified options
+    echo "Running citrea node..."
+    ./citrea-v0.5.4-linux-amd64 --da-layer bitcoin --rollup-config-path ./rollup_config.toml --genesis-paths ./genesis
+
+    # Output a success message
+    echo "Testnet setup is complete!"
+
+    # Call the master function to display the menu
+    master
+}
+
+# Function to print information in a clean format
+print_info() {
+    echo "$1"
+    echo "Head Block Number: $2"
+    echo "Synced Block Number: $3"
+}
+
+
+# Function to check sync status of the node
+testnet_sync_status() {
+    # Send POST request to get sync status
+    response=$(curl -X POST --header "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"citrea_syncStatus","params":[], "id":31}' http://0.0.0.0:8080)
+
+    # Extract relevant fields from the response
+    l1_status=$(echo $response | jq -r '.result.l1Status.Syncing')
+    l1_head_block_number=$(echo $l1_status | jq -r '.headBlockNumber')
+    l1_synced_block_number=$(echo $l1_status | jq -r '.syncedBlockNumber')
+
+    l2_status=$(echo $response | jq -r '.result.l2Status.Syncing')
+    l2_head_block_number=$(echo $l2_status | jq -r '.headBlockNumber')
+    l2_synced_block_number=$(echo $l2_status | jq -r '.syncedBlockNumber')
+
+    # Check if L1 node is fully synced
+    echo "L1 Status:"
+    if [[ "$l1_head_block_number" == "$l1_synced_block_number" ]]; then
+        print_info "L1 Node is fully synced" "$l1_head_block_number" "$l1_synced_block_number"
+    else
+        print_info "L1 Node is not fully synced yet" "$l1_head_block_number" "$l1_synced_block_number"
+    fi
+
+    # Check if L2 node is fully synced
+    echo "L2 Status:"
+    if [[ "$l2_head_block_number" == "$l2_synced_block_number" ]]; then
+        print_info "L2 Node is fully synced" "$l2_head_block_number" "$l2_synced_block_number"
+    else
+        print_info "L2 Node is not fully synced yet" "$l2_head_block_number" "$l2_synced_block_number"
+    fi
+
+    # Call the master function to display the menu
+    master
+}
+
+
+
+L1_logs() {
+    echo "Fetching the last 100 lines of logs for the node 'bitcoin-testnet4'..."
+    docker logs --tail 100 -f bitcoin-testnet4
+}
+
+
+full_node_logs() {
+    echo "Fetching the last 100 lines of logs for the node 'bitcoin-testnet4'..."
+    docker logs --tail 100 -f full-node
+}
 
 
 
@@ -150,22 +260,20 @@ master() {
     print_info "==============================="
     print_info ""
     print_info "1. Install-Dependency"
-    print_info "2. Setup-Citrea"
-    print_info "3. "
-    print_info "4. "
-    print_info "5. "
-    print_info "6. "
-    print_info "7. "
-    print_info "8. "
-    print_info "9. "
-    
+    print_info "2. Setup-BTC"
+    print_info "3. BTC-Sync-Status"
+    print_info "4. Setup-Full-Node"
+    print_info "5. Full-Node-Sync-Stauts"
+    print_info "6. BTC-Logs"
+    print_info "7. Full-Node-Logs"
+    print_info "8. Exit"
     print_info ""
     print_info "==============================="
     print_info " Created By : CB-Master "
     print_info "==============================="
     print_info ""
     
-    read -p "Enter your choice (1 or 3): " user_choice
+    read -p "Enter your choice (1 or 8): " user_choice
 
     case $user_choice in
         1)
@@ -175,25 +283,25 @@ master() {
             setup_node
             ;;
         3) 
-
+            check_sync_status
             ;;
         4)
-
+            setup_testnet
             ;;
         5)
-
+            testnet_sync_status
             ;;
         6)
-
+            L1_logs
             ;;
         7)
-
+            full_node_logs
             ;;
         8)
             exit 0  # Exit the script after breaking the loop
             ;;
         *)
-            print_error "Invalid choice. Please enter 1 or 3 : "
+            print_error "Invalid choice. Please enter 1 or 8 : "
             ;;
     esac
 }
