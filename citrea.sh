@@ -195,13 +195,6 @@ setup_testnet() {
     master
 }
 
-# Function to print information in a clean format
-print_info() {
-    echo "$1"
-    echo "Head Block Number: $2"
-    echo "Synced Block Number: $3"
-}
-
 
 # Function to check sync status of the node
 testnet_sync_status() {
