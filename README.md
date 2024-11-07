@@ -67,6 +67,6 @@ ________________________________________________________________________________
 This Auto Script for Node Management on the Citrea has been created by CryptoBuroMaster. It is a comprehensive solution designed to simplify and enhance the node management experience. By providing a clear and organized interface, it allows users to efficiently manage their nodes with ease. Whether you are a newcomer or an experienced user, this script empowers you to handle node operations seamlessly, ensuring that you can focus on what truly matters in your blockchain journey.
 
 # Author
-**Created by: CryptoBuroMaster**
+**Created by: CryptoBureau-Master**
 
 **Join our TG : https://t.me/CryptoBuroOfficial**
