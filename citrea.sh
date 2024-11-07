@@ -108,7 +108,7 @@ install_dependency() {
 
 
 # Function to set up the Citrea Node
-setup_node() {
+setup_btc() {
     echo "Starting Citrea node setup..."
 
     sudo ufw allow 18443
@@ -136,7 +136,7 @@ setup_node() {
 
 
 
-check_sync_status() {
+check_sync_status_btc() {
     # Get the blockchain info using JSON-RPC
     response=$(curl --user citrea:citrea --data-binary '{"jsonrpc": "1.0", "id": "curltest", "method": "getblockchaininfo", "params": []}' -H 'content-type: text/plain;' http://0.0.0.0:18443)
 
@@ -161,7 +161,7 @@ check_sync_status() {
 
 
 # Function to setup the Citrea Testnet
-setup_testnet() {
+setup_citrea() {
     # Create the testnet folder if it doesn't exist
     mkdir -p /root/citrea/testnet
     cd /root/citrea/testnet
@@ -196,37 +196,43 @@ setup_testnet() {
 }
 
 
-testnet_sync_status() {
+citrea_sync_status() {
     # Send POST request to get sync status
     response=$(curl -X POST --header "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"citrea_syncStatus","params":[], "id":31}' http://0.0.0.0:8080)
 
+    # Check if the response is empty
+    if [[ -z "$response" || "$response" == "{}" ]]; then
+        echo "Error: No response from the server or empty response."
+        return
+    fi
+    
     # Extract relevant fields from the response
     l1_syncing=$(echo $response | jq -r '.result.l1Status.Syncing')
-    l1_head_block_number=$(echo $l1_syncing | jq -r '.headBlockNumber')
-    l1_synced_block_number=$(echo $l1_syncing | jq -r '.syncedBlockNumber')
+    l1_head_block_number=$(echo $l1_syncing | jq -r '.result.l1Status.Syncing.headBlockNumber')
+    l1_synced_block_number=$(echo $l1_syncing | jq -r '.result.l1Status.Syncing.syncedBlockNumber')
 
     l2_syncing=$(echo $response | jq -r '.result.l2Status.Syncing')
-    l2_head_block_number=$(echo $l2_syncing | jq -r '.headBlockNumber')
-    l2_synced_block_number=$(echo $l2_syncing | jq -r '.syncedBlockNumber')
+    l2_head_block_number=$(echo $l2_syncing | jq -r '.result.l2Status.Syncing.headBlockNumber')
+    l2_synced_block_number=$(echo $l2_syncing | jq -r '.result.l2Status.Syncing.syncedBlockNumber')
 
     # Check if L1 node is fully synced
     echo "L1-BTC Status:"
     if [[ "$l1_head_block_number" == "$l1_synced_block_number" ]]; then
         # If fully synced, print the status and the block numbers
-        print_info "L1-BTC Node is fully synced" "$l1_head_block_number" "$l1_synced_block_number"
+        print_info "L1-BTC Node is fully synced: True" "$l1_head_block_number" "$l1_synced_block_number"
     else
         # If not synced, print the status and block numbers
-        print_info "L1-BTC Node is fully synced yet" "$l1_head_block_number" "$l1_synced_block_number"
+        print_info "L1-BTC Node is fully synced: False" "$l1_head_block_number" "$l1_synced_block_number"
     fi
 
     # Check if L2 node is fully synced
     echo "L2-Citrea Status:"
     if [[ "$l2_head_block_number" == "$l2_synced_block_number" ]]; then
         # If fully synced, print the status and the block numbers
-        print_info "L2-Citrea Node is fully synced" "$l2_head_block_number" "$l2_synced_block_number"
+        print_info "L2-Citrea Node is fully synced: True" "$l2_head_block_number" "$l2_synced_block_number"
     else
         # If not synced, print the status and block numbers
-        print_info "L2-Citrea Node is fully synced yet" "$l2_head_block_number" "$l2_synced_block_number"
+        print_info "L2-Citrea Node is fully synced: False" "$l2_head_block_number" "$l2_synced_block_number"
     fi
 
     # Call the master function to display the menu
@@ -235,17 +241,52 @@ testnet_sync_status() {
 
 
 
-L1_logs() {
-    echo "Fetching the last 100 lines of logs for the node 'bitcoin-testnet4'..."
-    docker logs --tail 100 -f bitcoin-testnet4
+btc_logs() {
+    echo "Fetching the last 50 lines of logs for the node 'bitcoin-testnet4'..."
+    docker logs --tail 50 -f bitcoin-testnet4
+
+    # Call the master function to display the menu
+    master
 }
 
 
-full_node_logs() {
-    echo "Fetching the last 100 lines of logs for the node 'bitcoin-testnet4'..."
-    docker logs --tail 100 -f full-node
+citrea_logs() {
+    echo "Fetching the last 50 lines of logs for the node 'bitcoin-testnet4'..."
+    docker logs --tail 50 -f full-node
+
+    # Call the master function to display the menu
+    master
 }
 
+
+stop_node() {
+    echo "Node is Stop'..."
+    docker stop bitcoin-testnet4
+    docker stop full-node
+
+    # Call the master function to display the menu
+    master
+}
+
+
+start_node() {
+    echo "Node is Start'..."
+    docker start bitcoin-testnet4
+    docker start full-node
+
+    # Call the master function to display the menu
+    master
+}
+
+
+refresh_node() {
+    echo "Node is Refresh'..."
+    docker restart bitcoin-testnet4
+    docker restart full-node
+
+    # Call the master function to display the menu
+    master
+}
 
 
 
@@ -256,48 +297,64 @@ master() {
     print_info "==============================="
     print_info ""
     print_info "1. Install-Dependency"
+    print_info ""
     print_info "2. Setup-BTC"
     print_info "3. BTC-Sync-Status"
-    print_info "4. Setup-Full-Node"
-    print_info "5. Full-Node-Sync-Stauts"
-    print_info "6. BTC-Logs"
-    print_info "7. Full-Node-Logs"
-    print_info "8. Exit"
+    print_info "4. BTC-Logs"
+    print_info ""
+    print_info "5. Setup-Citrea"
+    print_info "6. Citrea-Sync-Stauts"
+    print_info "7. Citrea-Logs"
+    print_info ""
+    print_info "8. Stop-Node"
+    print_info "9. Start-Node"
+    print_info "10. Refresh-Node"
+    print_info ""
+    print_info "11. Exit"
     print_info ""
     print_info "==============================="
-    print_info " Created By : CB-Master "
+    print_info "   Created By : CB-Master      "
     print_info "==============================="
     print_info ""
     
-    read -p "Enter your choice (1 or 8): " user_choice
+    read -p "Enter your choice (1 or 11): " user_choice
 
     case $user_choice in
         1)
             install_dependency
             ;;
         2)
-            setup_node
+            setup_btc
             ;;
         3) 
-            check_sync_status
+            check_sync_status_btc
             ;;
         4)
-            setup_testnet
+            btc_logs
             ;;
         5)
-            testnet_sync_status
+            setup_citrea
             ;;
         6)
-            L1_logs
+            citrea_sync_status
             ;;
         7)
-            full_node_logs
+            citrea_logs
             ;;
         8)
+            stop_node
+            ;;
+        9)
+            start_node
+            ;;
+        10)
+            refresh_node
+            ;;
+        11)
             exit 0  # Exit the script after breaking the loop
             ;;
         *)
-            print_error "Invalid choice. Please enter 1 or 8 : "
+            print_error "Invalid choice. Please enter 1 or 11 : "
             ;;
     esac
 }
