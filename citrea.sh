@@ -184,10 +184,6 @@ setup_citrea() {
     # Give execute permissions to the binary
     chmod u+x ./citrea-v0.5.4-linux-amd64
 
-    # Run the Citrea binary with the specified options
-    echo "Running citrea node..."
-    ./citrea-v0.5.4-linux-amd64 --da-layer bitcoin --rollup-config-path ./rollup_config.toml --genesis-paths ./genesis
-
     # Output a success message
     echo "Testnet setup is complete!"
 
