@@ -216,7 +216,7 @@ testnet_sync_status() {
         print_info "L1-BTC Node is fully synced" "$l1_head_block_number" "$l1_synced_block_number"
     else
         # If not synced, print the status and block numbers
-        print_info "L1-BTC Node is not fully synced yet"
+        print_info "L1-BTC Node is fully synced yet" "$l1_head_block_number" "$l1_synced_block_number"
     fi
 
     # Check if L2 node is fully synced
@@ -226,7 +226,7 @@ testnet_sync_status() {
         print_info "L2-Citrea Node is fully synced" "$l2_head_block_number" "$l2_synced_block_number"
     else
         # If not synced, print the status and block numbers
-        print_info "L2-Citrea is not fully synced yet"
+        print_info "L2-Citrea Node is fully synced yet" "$l2_head_block_number" "$l2_synced_block_number"
     fi
 
     # Call the master function to display the menu
