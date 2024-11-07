@@ -196,34 +196,37 @@ setup_testnet() {
 }
 
 
-# Function to check sync status of the node
 testnet_sync_status() {
     # Send POST request to get sync status
     response=$(curl -X POST --header "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"citrea_syncStatus","params":[], "id":31}' http://0.0.0.0:8080)
 
     # Extract relevant fields from the response
-    l1_status=$(echo $response | jq -r '.result.l1Status.Syncing')
-    l1_head_block_number=$(echo $l1_status | jq -r '.headBlockNumber')
-    l1_synced_block_number=$(echo $l1_status | jq -r '.syncedBlockNumber')
+    l1_syncing=$(echo $response | jq -r '.result.l1Status.Syncing')
+    l1_head_block_number=$(echo $l1_syncing | jq -r '.headBlockNumber')
+    l1_synced_block_number=$(echo $l1_syncing | jq -r '.syncedBlockNumber')
 
-    l2_status=$(echo $response | jq -r '.result.l2Status.Syncing')
-    l2_head_block_number=$(echo $l2_status | jq -r '.headBlockNumber')
-    l2_synced_block_number=$(echo $l2_status | jq -r '.syncedBlockNumber')
+    l2_syncing=$(echo $response | jq -r '.result.l2Status.Syncing')
+    l2_head_block_number=$(echo $l2_syncing | jq -r '.headBlockNumber')
+    l2_synced_block_number=$(echo $l2_syncing | jq -r '.syncedBlockNumber')
 
     # Check if L1 node is fully synced
-    echo "L1 Status:"
+    echo "L1-BTC Status:"
     if [[ "$l1_head_block_number" == "$l1_synced_block_number" ]]; then
-        print_info "L1 Node is fully synced" "$l1_head_block_number" "$l1_synced_block_number"
+        # If fully synced, print the status and the block numbers
+        print_info "L1-BTC Node is fully synced" "$l1_head_block_number" "$l1_synced_block_number"
     else
-        print_info "L1 Node is not fully synced yet" "$l1_head_block_number" "$l1_synced_block_number"
+        # If not synced, print the status and block numbers
+        print_info "L1-BTC Node is not fully synced yet"
     fi
 
     # Check if L2 node is fully synced
-    echo "L2 Status:"
+    echo "L2-Citrea Status:"
     if [[ "$l2_head_block_number" == "$l2_synced_block_number" ]]; then
-        print_info "L2 Node is fully synced" "$l2_head_block_number" "$l2_synced_block_number"
+        # If fully synced, print the status and the block numbers
+        print_info "L2-Citrea Node is fully synced" "$l2_head_block_number" "$l2_synced_block_number"
     else
-        print_info "L2 Node is not fully synced yet" "$l2_head_block_number" "$l2_synced_block_number"
+        # If not synced, print the status and block numbers
+        print_info "L2-Citrea is not fully synced yet"
     fi
 
     # Call the master function to display the menu
